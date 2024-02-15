@@ -1,9 +1,15 @@
-import { createAsyncThunk } from "@reduxjs/toolkit";
+import { createAsyncThunk } from '@reduxjs/toolkit'
 
-import $api from "@/src/api/api";
+import $api from '@/src/api/api'
+import type { FilterType } from '@/src/types/Filter/filter.types'
 
-import type { GetFavoritesResponseType } from "./type";
+import type { GetFavoritesResponseType } from './type'
 
-export const getFavoritesThunk = createAsyncThunk("get-favorites", () =>
-  $api.get<GetFavoritesResponseType>(`/favorite`).then(({ data }) => (data))
-);
+export const getFavoritesThunk = createAsyncThunk<
+    GetFavoritesResponseType,
+    Partial<FilterType>
+>('get-favorites', (filters) =>
+    $api
+        .post<GetFavoritesResponseType>(`/favorite`, filters)
+        .then(({ data }) => data)
+)

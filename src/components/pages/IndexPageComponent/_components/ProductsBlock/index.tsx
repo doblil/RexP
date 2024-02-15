@@ -1,27 +1,69 @@
-import { useMemo } from "react";
+/* eslint-disable @typescript-eslint/no-shadow */
+import { useRef } from 'react'
 
-import CatalogSpacer from "@/src/components/ui/CatalogSpacer";
-import ProductCard from "@/src/components/ui/ProductCard";
-import { useAppSelector } from "@/src/hooks/redux-hooks/redux-hooks";
+import CatalogSpacer from '@/src/components/ui/CatalogSpacer'
+import ProductCard from '@/src/components/ui/ProductCard'
+import {
+    useAppDispatch,
+    useAppSelector
+} from '@/src/hooks/redux-hooks/redux-hooks'
+import { useObserver } from '@/src/hooks/useObserver'
+import { usePagination } from '@/src/hooks/usePagination'
+import { addPaginatedProducts } from '@/src/store/slices/getProducts'
+import { getProducts } from '@/src/utils/api/getProducts'
 
-import s from "./ProductsBlock.module.scss";
+import NotFound from '../NotFound/NotFound'
 
 const ProductsBlock = () => {
-  const activeFilter = useAppSelector((state) => state.filters.indexPage.activeFilter);
-  const products = useAppSelector((state) => state.products.data);
+    const dispatch = useAppDispatch()
 
-  const filteredProducts = useMemo(
-    () => products.filter((product) => product.subCategory.category.name === activeFilter),
-    [products, activeFilter]
-  );
+    const observerRef = useRef<HTMLDivElement | null>(null)
+    const products = useAppSelector((state) => state.products.data)
+    const filters = useAppSelector((state) => state.filter)
+    const { limit, page, totalItems } = useAppSelector(
+        (state) => state.pagination
+    )
 
-  return (
-    <CatalogSpacer>
-      {filteredProducts.map(({ id, name, price, images }, index) => (
-        <ProductCard key={id} price={price} name={name} imgUrl={images[0].name} imagePriority={index < 4} id={id} />
-      ))}
-    </CatalogSpacer>
-  );
-};
+    const { fetchQuery } = usePagination({
+        callback: async () => {
+            const response = await getProducts({
+                filters: { page, limit, ...filters }
+            })
+            if (response.data) {
+                dispatch(addPaginatedProducts(response.data))
+            }
+            return response
+        },
+        limit,
+        page: page + 1,
+        isDisabled: totalItems === null || limit * page >= totalItems
+    })
 
-export default ProductsBlock;
+    useObserver({
+        callback: fetchQuery,
+        element: observerRef
+    })
+
+    if (filters.name && products.length === 0) {
+        return <NotFound />
+    }
+
+    return (
+        <CatalogSpacer>
+            {products.map(({ id, name, images, price, isOuter }, index) => (
+                <ProductCard
+                    key={id}
+                    isOuter={isOuter}
+                    price={price}
+                    name={name}
+                    imgUrl={images[0].name}
+                    imagePriority={index < 4}
+                    id={id}
+                />
+            ))}
+            <div ref={observerRef} />
+        </CatalogSpacer>
+    )
+}
+
+export default ProductsBlock

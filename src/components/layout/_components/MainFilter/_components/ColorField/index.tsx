@@ -1,57 +1,81 @@
-import React, { useEffect, useState } from "react";
+/* eslint-disable react/jsx-no-bind */
+import React, { useState } from 'react'
 
-import { CheckboxGroup } from "@nextui-org/react";
-import clsx from "clsx";
+import { CheckboxGroup } from '@nextui-org/react'
+import clsx from 'clsx'
 
-import all from "@/public/images/colors/all.png";
-import RootCheckbox from "@/src/components/ui/RootCheckbox";
-import { useAppSelector } from "@/src/hooks/redux-hooks/redux-hooks";
+import all from '@/public/images/colors/all.png'
+import RootCheckbox from '@/src/components/ui/RootCheckbox'
+import { useAppSelector } from '@/src/hooks/redux-hooks/redux-hooks'
+import type { FilterType } from '@/src/types/Filter/filter.types'
 
-import s from "./ColorField.module.scss";
+import s from './ColorField.module.scss'
 
-const ColorField = () => {
-  const [mainChecked, setMainChecked] = useState(false);
-  const [selected, setSelected] = useState<string[]>([""]);
-  const colors = useAppSelector((state) => state.colors.data);
+interface Props {
+    filters: FilterType
+    changeFilters: (values: Partial<FilterType>) => void
+}
 
-  console.log(colors);
+const ColorField = ({ changeFilters, filters }: Props) => {
+    const colors = useAppSelector((state) => state.colors.data)
 
-  useEffect(() => {
-    if (mainChecked) {
-      setSelected([""]);
+    const [mainChecked, setMainChecked] = useState(filters.colors.length === 0)
+
+    function onValueChangeGroup(values: string[]) {
+        changeFilters({ colors: values })
+
+        if (values.length === 0) {
+            setMainChecked(true)
+        } else {
+            setMainChecked(false)
+        }
     }
-  }, [mainChecked]);
 
-  useEffect(() => {
-		console.log(selected)
-    if (selected.length > 1) {
-      setMainChecked(false);
+    function onValueChangeMain(isSelected: boolean) {
+        if (isSelected) {
+            setMainChecked(true)
+        }
+
+        changeFilters({ colors: [] })
     }
-  }, [selected]);
 
-  return (
-    <div className={s.wrapper}>
-      <RootCheckbox onValueChange={setMainChecked} isSelected={mainChecked}>
-        <div className={s.colorWrapper}>
-          <div className={s.colorAll} style={{ backgroundImage: `url(${all.src})` }} />
-          <div className={s.name}>Все цвета</div>
+    return (
+        <div className={s.wrapper}>
+            <RootCheckbox
+                onValueChange={onValueChangeMain}
+                isSelected={mainChecked}
+            >
+                <div className={s.colorWrapper}>
+                    <div
+                        className={s.colorAll}
+                        style={{ backgroundImage: `url(${all.src})` }}
+                    />
+                    <div className={s.name}>Все цвета</div>
+                </div>
+            </RootCheckbox>
+            <CheckboxGroup
+                value={filters.colors}
+                onValueChange={onValueChangeGroup}
+            >
+                {colors.map((color) => (
+                    <RootCheckbox key={color.id} value={`${color.id}`}>
+                        <div className={s.colorWrapper}>
+                            <div
+                                className={clsx(
+                                    s.color,
+                                    ['white', '#FFFFFF', '#fff'].includes(
+                                        color.colorID
+                                    ) && s.white
+                                )}
+                                style={{ backgroundColor: color.colorID }}
+                            />
+                            <div className={s.name}>{color.name}</div>
+                        </div>
+                    </RootCheckbox>
+                ))}
+            </CheckboxGroup>
         </div>
-      </RootCheckbox>
-      <CheckboxGroup value={selected} onValueChange={setSelected}>
-        {colors.map((color) => (
-          <RootCheckbox key={color.id} value={`${color.id}`}>
-            <div className={s.colorWrapper}>
-              <div
-                className={clsx(s.color, ["white", "#FFFFFF", "#fff"].includes(color.colorID) && s.white)}
-                style={{ backgroundColor: color.colorID }}
-              />
-              <div className={s.name}>{color.name}</div>
-            </div>
-          </RootCheckbox>
-        ))}
-      </CheckboxGroup>
-    </div>
-  );
-};
+    )
+}
 
-export default ColorField;
+export default ColorField

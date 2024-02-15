@@ -1,22 +1,19 @@
-import type { PropsWithChildren } from "react";
+import clsx from 'clsx'
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { Toaster } from 'sonner'
 
-import clsx from "clsx";
-import { Toaster } from "sonner";
+import { inter, manrope } from '@/src/assets/fonts/fonts'
 
-import { inter, manrope } from "@/src/assets/fonts/fonts";
+import Footer from '../_components/Footer'
 
-import Footer from "../_components/Footer";
-import MainFilter from "../_components/MainFilter";
+import s from './PageLayout.module.scss'
 
-import s from "./PageLayout.module.scss";
+const PageLayout = ({ children }) => (
+    <div className={clsx(s['page-wrapper'], manrope.variable, inter.variable)}>
+        <main className={s['page-layout']}>{children}</main>
+        <Footer />
+        <Toaster position='top-center' richColors />
+    </div>
+)
 
-const PageLayout: React.FC<PropsWithChildren> = ({ children }) => (
-  <div className={clsx(s["page-wrapper"], manrope.variable, inter.variable)}>
-    <main className={s["page-layout"]}>{children}</main>
-    <Footer />
-    <MainFilter />
-    <Toaster position="top-center" richColors />
-  </div>
-);
-
-export default PageLayout;
+export default PageLayout
